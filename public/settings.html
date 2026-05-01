@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إعدادات API | يعقوب AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                يعقوب <span>AI</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fas fa-home"></i> الرئيسية</a></li>
+                <li><a href="dashboard.html"><i class="fas fa-th-large"></i> الأدوات</a></li>
+                <li><a href="settings.html"><i class="fas fa-cog"></i> الإعدادات</a></li>
+            </ul>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1><i class="fas fa-key"></i> إعدادات مفاتيح API</h1>
+        <p style="text-align: center; margin-bottom: 2rem;">قم بإدخال مفاتيح API الخاصة بك لتفعيل الأدوات. جميع المفاتيح تُحفظ محلياً في متصفحك بشكل آمن.</p>
+        
+        <div class="settings-form">
+            <div class="form-group">
+                <label><i class="fab fa-openai"></i> OpenAI API Key</label>
+                <input type="password" id="openaiKey" placeholder="sk-..." autocomplete="off">
+                <small>يستخدم لـ: الدردشة، توليد النصوص، توليد الصور، تحويل الصوت إلى نص، النص إلى صوت</small>
+            </div>
+            
+            <div class="form-group">
+                <label><i class="fas fa-gem"></i> Google Gemini API Key</label>
+                <input type="password" id="geminiKey" placeholder="AIzaSy...">
+                <small>⚠️ قيد التطوير - سيتم دعمه قريباً</small>
+            </div>
+            
+            <div class="form-group">
+                <label><i class="fas fa-brain"></i> DeepSeek API Key</label>
+                <input type="password" id="deepseekKey" placeholder="ds-...">
+                <small>يستخدم لـ: الدردشة المتقدمة (بديل لـ OpenAI)</small>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="saveKeys()">
+                    <i class="fas fa-save"></i> حفظ الإعدادات
+                </button>
+                
+                <button class="btn btn-secondary" onclick="testConnection()">
+                    <i class="fas fa-vial"></i> اختبار الاتصال
+                </button>
+                
+                <button class="btn btn-secondary" onclick="clearAllKeys()">
+                    <i class="fas fa-trash"></i> مسح الكل
+                </button>
+            </div>
+        </div>
+        
+        <div id="messageContainer"></div>
+        
+        <div class="info-box">
+            <i class="fas fa-shield-alt" style="font-size: 2rem;"></i>
+            <div>
+                <strong>🔒 ملاحظة أمنية مهمة:</strong><br>
+                مفاتيح API الخاصة بك تُحفظ فقط في متصفحك (Local Storage) ولا يتم تخزينها على خوادمنا.<br>
+                تأكد من عدم مشاركة مفاتيحك مع أي شخص. يمكنك أيضاً إضافة مفاتيح افتراضية في ملف .env على الخادم.
+            </div>
+        </div>
+        
+        <div class="info-box" style="background: var(--success); margin-top: 1rem;">
+            <i class="fas fa-question-circle" style="font-size: 2rem;"></i>
+            <div>
+                <strong>📌 كيفية الحصول على مفاتيح API:</strong><br>
+                • OpenAI: <a href="https://platform.openai.com/api-keys" target="_blank" style="color: white;">https://platform.openai.com/api-keys</a><br>
+                • DeepSeek: <a href="https://platform.deepseek.com/api_keys" target="_blank" style="color: white;">https://platform.deepseek.com/api_keys</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load saved keys on page load
+        function loadKeys() {
+            const keys = JSON.parse(localStorage.getItem('apiKeys') || '{}');
+            document.getElementById('openaiKey').value = keys.openai || '';
+            document.getElementById('geminiKey').value = keys.gemini || '';
+            document.getElementById('deepseekKey').value = keys.deepseek || '';
+        }
+        
+        function saveKeys() {
+            const keys = {
+                openai: document.getElementById('openaiKey').value.trim(),
+                gemini: document.getElementById('geminiKey').value.trim(),
+                deepseek: document.getElementById('deepseekKey').value.trim()
+            };
+            
+            localStorage.setItem('apiKeys', JSON.stringify(keys));
+            showMessage('✅ تم حفظ مفاتيح API بنجاح!', 'success');
+        }
+        
+        function clearAllKeys() {
+            if(confirm('⚠️ هل أنت متأكد من مسح جميع مفاتيح API؟')) {
+                localStorage.removeItem('apiKeys');
+                document.getElementById('openaiKey').value = '';
+                document.getElementById('geminiKey').value = '';
+                document.getElementById('deepseekKey').value = '';
+                showMessage('🗑️ تم مسح جميع المفاتيح', 'success');
+            }
+        }
+        
+        async function testConnection() {
+            const openaiKey = document.getElementById('openaiKey').value.trim();
+            
+            if(!openaiKey) {
+                showMessage('⚠️ يرجى إدخال مفتاح OpenAI API أولاً', 'warning');
+                return;
+            }
+            
+            showMessage('🔄 جاري اختبار الاتصال... يرجى الانتظار', 'info');
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: 'قل فقط "مرحباً" كلمة واحدة',
+                        apiKey: openaiKey,
+                        model: 'gpt-3.5-turbo'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if(data.error) {
+                    showMessage('❌ فشل الاتصال: ' + data.error, 'error');
+                } else {
+                    showMessage('✅ الاتصال ناجح! OpenAI API يعمل بشكل صحيح.', 'success');
+                }
+            } catch(error) {
+                showMessage('❌ فشل الاتصال بالخادم. تأكد من تشغيل الخادم.', 'error');
+            }
+        }
+        
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            container.innerHTML = `<div class="alert-${type} fade-in">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+        
+        // Load keys on page load
+        loadKeys();
+    </script>
+    <script src="js/theme.js"></script>
+</body>
+</html>

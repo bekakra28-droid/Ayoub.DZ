@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="منصة يعقوب المتكاملة لأدوات الذكاء الاصطناعي - الدردشة، توليد النصوص والصور والفيديو، تحويل الصوت إلى نص والعكس">
+    <title>يعقوب | منصة الذكاء الاصطناعي المتكاملة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                يعقوب <span>AI</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fas fa-home"></i> الرئيسية</a></li>
+                <li><a href="dashboard.html"><i class="fas fa-th-large"></i> الأدوات</a></li>
+                <li><a href="settings.html"><i class="fas fa-cog"></i> الإعدادات</a></li>
+            </ul>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <h1>مرحباً بك في منصة يعقوب</h1>
+        <p>منصتك المتكاملة لأدوات الذكاء الاصطناعي الأكثر تقدماً في العالم العربي</p>
+        <button class="btn btn-primary" onclick="location.href='dashboard.html'">
+            استكشف الأدوات <i class="fas fa-arrow-left"></i>
+        </button>
+    </section>
+
+    <div class="tools-grid">
+        <div class="tool-card" onclick="location.href='tools/chat.html'">
+            <div class="tool-icon">💬</div>
+            <h3>الدردشة الذكية</h3>
+            <p>تحدث مع AI متقدم واحصل على إجابات فورية ودقيقة</p>
+            <span class="tool-category">نصوص</span>
+        </div>
+        
+        <div class="tool-card" onclick="location.href='tools/text-generate.html'">
+            <div class="tool-icon">📝</div>
+            <h3>توليد النصوص</h3>
+            <p>كتابة مقالات، تلخيص، ترجمة، وتحسين النصوص باحترافية</p>
+            <span class="tool-category">نصوص</span>
+        </div>
+        
+        <div class="tool-card" onclick="location.href='tools/image-generate.html'">
+            <div class="tool-icon">🎨</div>
+            <h3>توليد الصور</h3>
+            <p>حول أفكارك إلى صور مذهلة بدقة عالية باستخدام DALL-E</p>
+            <span class="tool-category">صور</span>
+        </div>
+        
+        <div class="tool-card" onclick="location.href='tools/video-generate.html'">
+            <div class="tool-icon">🎥</div>
+            <h3>توليد الفيديو</h3>
+            <p>أنشئ فيديوهات احترافية من النصوص (قريباً)</p>
+            <span class="tool-category">فيديو</span>
+        </div>
+        
+        <div class="tool-card" onclick="location.href='tools/speech-to-text.html'">
+            <div class="tool-icon">🎙️</div>
+            <h3>صوت إلى نص</h3>
+            <p>حول التسجيلات الصوتية إلى نصوص مكتوبة بدقة عالية</p>
+            <span class="tool-category">صوت</span>
+        </div>
+        
+        <div class="tool-card" onclick="location.href='tools/text-to-speech.html'">
+            <div class="tool-icon">🔊</div>
+            <h3>نص إلى صوت</h3>
+            <p>حول النصوص إلى كلام طبيعي بصوت بشري</p>
+            <span class="tool-category">صوت</span>
+        </div>
+        
+        <div class="tool-card" onclick="location.href='tools/code-assistant.html'">
+            <div class="tool-icon">💻</div>
+            <h3>مساعد الأكواد</h3>
+            <p>اكتب أكواد برمجية بمساعدة الذكاء الاصطناعي مع شرح تفصيلي</p>
+            <span class="tool-category">برمجة</span>
+        </div>
+    </div>
+
+    <script src="js/theme.js"></script>
+</body>
+</html>
