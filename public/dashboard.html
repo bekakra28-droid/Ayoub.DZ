@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم | يعقوب AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                يعقوب <span>AI</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fas fa-home"></i> الرئيسية</a></li>
+                <li><a href="dashboard.html"><i class="fas fa-th-large"></i> الأدوات</a></li>
+                <li><a href="settings.html"><i class="fas fa-cog"></i> الإعدادات</a></li>
+            </ul>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1><i class="fas fa-th-large"></i> لوحة التحكم</h1>
+        
+        <div class="search-bar">
+            <input type="text" id="searchTools" placeholder="🔍 ابحث عن أداة... (دردشة، صور، نصوص...)" onkeyup="filterTools()">
+        </div>
+        
+        <div class="tools-categories">
+            <button class="btn btn-secondary" onclick="filterByCategory('all')"><i class="fas fa-list"></i> الكل</button>
+            <button class="btn btn-secondary" onclick="filterByCategory('text')"><i class="fas fa-file-alt"></i> نصوص</button>
+            <button class="btn btn-secondary" onclick="filterByCategory('image')"><i class="fas fa-image"></i> صور</button>
+            <button class="btn btn-secondary" onclick="filterByCategory('video')"><i class="fas fa-video"></i> فيديو</button>
+            <button class="btn btn-secondary" onclick="filterByCategory('audio')"><i class="fas fa-headphones"></i> صوت</button>
+            <button class="btn btn-secondary" onclick="filterByCategory('coding')"><i class="fas fa-code"></i> برمجة</button>
+        </div>
+        
+        <div class="tools-grid" id="toolsGrid"></div>
+    </div>
+
+    <script>
+        const tools = [
+            { name: "الدردشة الذكية", icon: "💬", desc: "تحدث مع AI متقدم واحصل على إجابات فورية", category: "text", link: "tools/chat.html", color: "#3b82f6" },
+            { name: "توليد النصوص", icon: "📝", desc: "كتابة مقالات، تقارير، وقصص إبداعية", category: "text", link: "tools/text-generate.html", color: "#10b981" },
+            { name: "توليد الصور", icon: "🎨", desc: "إنشاء صور فنية من وصف نصي", category: "image", link: "tools/image-generate.html", color: "#8b5cf6" },
+            { name: "توليد الفيديو", icon: "🎥", desc: "إنشاء فيديوهات من النصوص (Beta)", category: "video", link: "tools/video-generate.html", color: "#ef4444" },
+            { name: "صوت إلى نص", icon: "🎙️", desc: "تحويل التسجيلات الصوتية إلى نصوص", category: "audio", link: "tools/speech-to-text.html", color: "#f59e0b" },
+            { name: "نص إلى صوت", icon: "🔊", desc: "تحويل النصوص إلى كلام طبيعي", category: "audio", link: "tools/text-to-speech.html", color: "#06b6d4" },
+            { name: "مساعد الأكواد", icon: "💻", desc: "كتابة وشرح الأكواد البرمجية", category: "coding", link: "tools/code-assistant.html", color: "#14b8a6" },
+            { name: "تلخيص النصوص", icon: "📄", desc: "تلخيص المقالات والمستندات الطويلة", category: "text", link: "tools/text-generate.html?task=summarize", color: "#a855f7" },
+            { name: "ترجمة فورية", icon: "🌐", desc: "ترجمة بين العربية وأكثر من 50 لغة", category: "text", link: "tools/text-generate.html?task=translate", color: "#ec4899" },
+            { name: "تحسين النصوص", icon: "✨", desc: "تحسين الأسلوب والإملاء والقواعد", category: "text", link: "tools/text-generate.html?task=improve", color: "#f97316" }
+        ];
+
+        function displayTools(toolsArray) {
+            const grid = document.getElementById('toolsGrid');
+            if(grid) {
+                grid.innerHTML = toolsArray.map(tool => `
+                    <div class="tool-card fade-in" onclick="location.href='${tool.link}'">
+                        <div class="tool-icon">${tool.icon}</div>
+                        <h3>${tool.name}</h3>
+                        <p>${tool.desc}</p>
+                        <span class="tool-category">${getCategoryName(tool.category)}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function getCategoryName(category) {
+            const categories = {
+                text: '📝 نصوص',
+                image: '🎨 صور',
+                video: '🎥 فيديو',
+                audio: '🎵 صوت',
+                coding: '💻 برمجة'
+            };
+            return categories[category] || category;
+        }
+
+        function filterTools() {
+            const searchTerm = document.getElementById('searchTools').value.toLowerCase();
+            const filtered = tools.filter(tool => 
+                tool.name.includes(searchTerm) || tool.desc.includes(searchTerm)
+            );
+            displayTools(filtered);
+        }
+
+        function filterByCategory(category) {
+            if(category === 'all') {
+                displayTools(tools);
+            } else {
+                const filtered = tools.filter(tool => tool.category === category);
+                displayTools(filtered);
+            }
+        }
+
+        // Load tools on page load
+        displayTools(tools);
+    </script>
+    <script src="js/theme.js"></script>
+</body>
+</html>
