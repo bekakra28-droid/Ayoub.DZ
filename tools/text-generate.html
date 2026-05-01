@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>توليد النصوص | يعقوب AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                يعقوب <span>AI</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">الرئيسية</a></li>
+                <li><a href="../dashboard.html">الأدوات</a></li>
+                <li><a href="../settings.html">الإعدادات</a></li>
+            </ul>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1><i class="fas fa-file-alt"></i> توليد وتحسين النصوص</h1>
+        
+        <div class="tool-container" style="max-width: 800px; margin: 2rem auto;">
+            <div class="form-group">
+                <label>📋 نوع المهمة:</label>
+                <select id="taskType">
+                    <option value="write">✍️ كتابة نص جديد</option>
+                    <option value="summarize">📄 تلخيص نص</option>
+                    <option value="translate">🌐 ترجمة نص</option>
+                    <option value="improve">✨ تحسين وتصحيح النص</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>📝 النص أو المطلوب:</label>
+                <textarea id="prompt" rows="6" placeholder="مثال: اكتب مقالاً عن الذكاء الاصطناعي وتأثيره على مستقبل التعليم..."></textarea>
+            </div>
+            
+            <button class="btn btn-primary" onclick="generateText()">
+                <i class="fas fa-magic"></i> إنشاء
+            </button>
+            
+            <div id="loading" style="display: none; text-align: center; margin-top: 2rem;">
+                <div class="spinner"></div>
+                <p>جاري إنشاء النص...</p>
+            </div>
+            
+            <div id="result" class="result-box" style="display: none;">
+                <h3><i class="fas fa-star"></i> النتيجة:</h3>
+                <div id="generatedText" style="white-space: pre-wrap; line-height: 1.8;"></div>
+                <div style="margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button class="btn btn-secondary" onclick="copyText()">
+                        <i class="fas fa-copy"></i> نسخ النص
+                    </button>
+                    <button class="btn btn-secondary" onclick="downloadText()">
+                        <i class="fas fa-download"></i> تحميل كملف
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentResult = '';
+        
+        function getApiKey() {
+            const keys = JSON.parse(localStorage.getItem('apiKeys') || '{}');
+            return keys.openai || null;
+        }
+        
+        async function generateText() {
+            const prompt = document.getElementById('prompt').value.trim();
+            const task = document.getElementById('taskType').value;
+            
+            if(!prompt) {
+                alert('⚠️ يرجى إدخال النص أو المطلوب');
+                return;
+            }
+            
+            const apiKey = getApiKey();
+            if(!apiKey) {
+                alert('⚠️ يرجى إدخال مفتاح API الخاص بـ OpenAI في صفحة الإعدادات أولاً');
+                window.location.href = '../settings.html';
+                return;
+            }
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/generate-text', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        apiKey: apiKey,
+                        task: task
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('loading').style.display = 'none';
+                
+                if(data.error) {
+                    alert('❌ ' + data.error);
+                } else {
+                    currentResult = data.response;
+                    document.getElementById('generatedText').innerHTML = formatText(currentResult);
+                    document.getElementById('result').style.display = 'block';
+                    saveToHistory(prompt, currentResult, task);
+                }
+            } catch(error) {
+                document.getElementById('loading').style.display = 'none';
+                alert('❌ حدث خطأ في توليد النص');
+            }
+        }
+        
+        function formatText(text) {
+            return text.replace(/\n/g, '<br>');
+        }
+        
+        function copyText() {
+            navigator.clipboard.writeText(currentResult);
+            alert('✅ تم نسخ النص إلى الحافظة');
+        }
+        
+        function downloadText() {
+            const blob = new Blob([currentResult], {type: 'text/plain'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `yaqoub-text-${Date.now()}.txt`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+        
+        function saveToHistory(prompt, result, task) {
+            let history = JSON.parse(localStorage.getItem('textHistory') || '[]');
+            history.push({
+                prompt: prompt,
+                result: result,
+                task: task,
+                timestamp: new Date().toISOString()
+            });
+            if(history.length > 30) history = history.slice(-30);
+            localStorage.setItem('textHistory', JSON.stringify(history));
+        }
+        
+        // Get URL parameters for direct task selection
+        const urlParams = new URLSearchParams(window.location.search);
+        const taskParam = urlParams.get('task');
+        if(taskParam && ['summarize', 'translate', 'improve'].includes(taskParam)) {
+            document.getElementById('taskType').value = taskParam;
+        }
+    </script>
+    <script src="../js/theme.js"></script>
+</body>
+</html>

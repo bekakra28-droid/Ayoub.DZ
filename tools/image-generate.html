@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>توليد الصور | يعقوب AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                يعقوب <span>AI</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">الرئيسية</a></li>
+                <li><a href="../dashboard.html">الأدوات</a></li>
+                <li><a href="../settings.html">الإعدادات</a></li>
+            </ul>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1><i class="fas fa-palette"></i> توليد الصور بالذكاء الاصطناعي</h1>
+        
+        <div class="tool-container" style="max-width: 800px; margin: 2rem auto;">
+            <div class="form-group">
+                <label>🎨 وصف الصورة المطلوبة:</label>
+                <textarea id="prompt" rows="4" placeholder="مثال: منظر طبيعي خلاب لشروق الشمس فوق الجبال الثلجية، بألوان دافئة، أسلوب واقعي، جودة عالية..."></textarea>
+                <small>كلما كان الوصف أكثر تفصيلاً، كانت النتيجة أفضل</small>
+            </div>
+            
+            <div class="form-group">
+                <label>📏 حجم الصورة:</label>
+                <select id="size">
+                    <option value="256x256">صغير (256x256)</option>
+                    <option value="512x512">متوسط (512x512)</option>
+                    <option value="1024x1024" selected>كبير (1024x1024) - موصى به</option>
+                </select>
+            </div>
+            
+            <button class="btn btn-primary" onclick="generateImage()">
+                <i class="fas fa-magic"></i> توليد الصورة
+            </button>
+            
+            <div id="loading" style="display: none; text-align: center; margin-top: 2rem;">
+                <div class="spinner"></div>
+                <p>جاري توليد الصورة... قد يستغرق 10-20 ثانية</p>
+            </div>
+            
+            <div id="result" class="result-box" style="display: none; text-align: center;">
+                <h3><i class="fas fa-image"></i> النتيجة:</h3>
+                <img id="generatedImage" style="max-width: 100%; border-radius: 1rem; margin-top: 1rem; box-shadow: var(--shadow);">
+                <div style="margin-top: 1rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn btn-secondary" onclick="downloadImage()">
+                        <i class="fas fa-download"></i> تحميل الصورة
+                    </button>
+                    <button class="btn btn-secondary" onclick="shareImage()">
+                        <i class="fas fa-share-alt"></i> مشاركة
+                    </button>
+                </div>
+            </div>
+            
+            <div id="historySection" style="margin-top: 3rem;">
+                <h3><i class="fas fa-history"></i> الصور السابقة</h3>
+                <div id="imageHistory" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentImageUrl = '';
+        
+        function getApiKey() {
+            const keys = JSON.parse(localStorage.getItem('apiKeys') || '{}');
+            return keys.openai || null;
+        }
+        
+        async function generateImage() {
+            const prompt = document.getElementById('prompt').value.trim();
+            const size = document.getElementById('size').value;
+            
+            if(!prompt) {
+                alert('⚠️ يرجى إدخال وصف للصورة');
+                return;
+            }
+            
+            const apiKey = getApiKey();
+            if(!apiKey) {
+                alert('⚠️ يرجى إدخال مفتاح API الخاص بـ OpenAI في صفحة الإعدادات أولاً');
+                window.location.href = '../settings.html';
+                return;
+            }
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        apiKey: apiKey,
+                        size: size
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('loading').style.display = 'none';
+                
+                if(data.error) {
+                    alert('❌ ' + data.error);
+                } else {
+                    currentImageUrl = data.imageUrl;
+                    document.getElementById('generatedImage').src = currentImageUrl;
+                    document.getElementById('result').style.display = 'block';
+                    saveToHistory(prompt, currentImageUrl);
+                    loadHistory();
+                }
+            } catch(error) {
+                document.getElementById('loading').style.display = 'none';
+                alert('❌ حدث خطأ في توليد الصورة');
+            }
+        }
+        
+        function downloadImage() {
+            if(currentImageUrl) {
+                const link = document.createElement('a');
+                link.href = currentImageUrl;
+                link.download = `yaqoub-ai-image-${Date.now()}.png`;
+                link.click();
+            }
+        }
+        
+        function shareImage() {
+            if(currentImageUrl) {
+                window.open(currentImageUrl, '_blank');
+            }
+        }
+        
+        function saveToHistory(prompt, imageUrl) {
+            let history = JSON.parse(localStorage.getItem('imageHistory') || '[]');
+            history.unshift({
+                prompt: prompt,
+                imageUrl: imageUrl,
+                timestamp: new Date().toISOString()
+            });
+            if(history.length > 20) history = history.slice(0, 20);
+            localStorage.setItem('imageHistory', JSON.stringify(history));
+        }
+        
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('imageHistory') || '[]');
+            const historyDiv = document.getElementById('imageHistory');
+            
+            if(history.length === 0) {
+                historyDiv.innerHTML = '<p style="color: var(--text-secondary);">لا توجد صور سابقة. قم بتوليد صورتك الأولى!</p>';
+                return;
+            }
+            
+            historyDiv.innerHTML = history.map(item => `
+                <div class="tool-card" style="padding: 0.5rem; cursor: pointer;" onclick="viewImage('${item.imageUrl}')">
+                    <img src="${item.imageUrl}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 0.5rem;">
+                    <p style="font-size: 0.8rem; margin-top: 0.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.prompt.substring(0, 50)}...</p>
+                </div>
+            `).join('');
+        }
+        
+        function viewImage(url) {
+            currentImageUrl = url;
+            document.getElementById('generatedImage').src = url;
+            document.getElementById('result').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        loadHistory();
+    </script>
+    <script src="../js/theme.js"></script>
+</body>
+</html>
