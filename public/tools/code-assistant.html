@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مساعد الأكواد | يعقوب AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                يعقوب <span>AI</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">الرئيسية</a></li>
+                <li><a href="../dashboard.html">الأدوات</a></li>
+                <li><a href="../settings.html">الإعدادات</a></li>
+            </ul>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1><i class="fas fa-code"></i> مساعد الأكواد البرمجية</h1>
+        
+        <div class="tool-container" style="max-width: 900px; margin: 2rem auto;">
+            <div class="form-group">
+                <label>💻 لغة البرمجة:</label>
+                <select id="language">
+                    <option value="JavaScript">JavaScript</option>
+                    <option value="Python">Python</option>
+                    <option value="HTML/CSS">HTML/CSS</option>
+                    <option value="React">React</option>
+                    <option value="Node.js">Node.js</option>
+                    <option value="Java">Java</option>
+                    <option value="C++">C++</option>
+                    <option value="C#">C#</option>
+                    <option value="PHP">PHP</option>
+                    <option value="Ruby">Ruby</option>
+                    <option value="Go">Go</option>
+                    <option value="Rust">Rust</option>
+                    <option value="TypeScript">TypeScript</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>📝 طلبك (ماذا تريد أن يكتب الكود؟):</label>
+                <textarea id="prompt" rows="5" placeholder="مثال: اكتب دالة في JavaScript لحساب مجموع أرقام مصفوفة مع شرح الكود"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>⚙️ إعدادات إضافية:</label>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="includeComments" checked> مع تعليقات
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="includeExplanation" checked> مع شرح تفصيلي
+                    </label>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="generateCode()">
+                <i class="fas fa-terminal"></i> إنشاء الكود
+            </button>
+            
+            <div id="loading" style="display: none; text-align: center; margin-top: 2rem;">
+                <div class="spinner"></div>
+                <p>جاري إنشاء الكود...</p>
+            </div>
+            
+            <div id="result" class="result-box" style="display: none;">
+                <h3><i class="fas fa-code"></i> الكود المُنشأ:</h3>
+                <pre id="generatedCode" style="background: var(--bg-primary); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-family: monospace; direction: ltr; text-align: left;"></pre>
+                <div style="margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button class="btn btn-secondary" onclick="copyCode()">
+                        <i class="fas fa-copy"></i> نسخ الكود
+                    </button>
+                    <button class="btn btn-secondary" onclick="downloadCode()">
+                        <i class="fas fa-download"></i> تحميل الكود
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentCode = '';
+        
+        function getApiKey() {
+            const keys = JSON.parse(localStorage.getItem('apiKeys') || '{}');
+            return keys.openai || null;
+        }
+        
+        async function generateCode() {
+            const prompt = document.getElementById('prompt').value.trim();
+            const language = document.getElementById('language').value;
+            
+            if(!prompt) {
+                alert('⚠️ يرجى إدخال طلبك');
+                return;
+            }
+            
+            const apiKey = getApiKey();
+            if(!apiKey) {
+                alert('⚠️ يرجى إدخال مفتاح API الخاص بـ OpenAI في صفحة الإعدادات أولاً');
+                window.location.href = '../settings.html';
+                return;
+            }
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/code-assistant', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        language: language,
+                        apiKey: apiKey
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('loading').style.display = 'none';
+                
+                if(data.error) {
+                    alert('❌ ' + data.error);
+                } else {
+                    currentCode = data.response;
+                    document.getElementById('generatedCode').innerHTML = escapeHtml(currentCode);
+                    document.getElementById('result').style.display = 'block';
+                    saveToHistory(prompt, language, currentCode);
+                }
+            } catch(error) {
+                document.getElementById('loading').style.display = 'none';
+                alert('❌ حدث خطأ في إنشاء الكود');
+            }
+        }
+        
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+        
+        function copyCode() {
+            navigator.clipboard.writeText(currentCode);
+            alert('✅ تم نسخ الكود إلى الحافظة');
+        }
+        
+        function downloadCode() {
+            const language = document.getElementById('language').value;
+            const extensions = {
+                'JavaScript': 'js',
+                'Python': 'py',
+                'HTML/CSS': 'html',
+                'React': 'jsx',
+                'Node.js': 'js',
+                'Java': 'java',
+                'C++': 'cpp',
+                'C#': 'cs',
+                'PHP': 'php',
+                'Ruby': 'rb',
+                'Go': 'go',
+                'Rust': 'rs',
+                'TypeScript': 'ts'
+            };
+            
+            const ext = extensions[language] || 'txt';
+            const blob = new Blob([currentCode], {type: 'text/plain'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `code-${Date.now()}.${ext}`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+        
+        function saveToHistory(prompt, language, code) {
+            let history = JSON.parse(localStorage.getItem('codeHistory') || '[]');
+            history.unshift({
+                prompt: prompt.substring(0, 100),
+                language: language,
+                timestamp: new Date().toISOString()
+            });
+            if(history.length > 20) history = history.slice(0, 20);
+            localStorage.setItem('codeHistory', JSON.stringify(history));
+        }
+    </script>
+    <script src="../js/theme.js"></script>
+</body>
+</html>

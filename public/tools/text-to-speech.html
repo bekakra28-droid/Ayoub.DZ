@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نص إلى صوت | يعقوب AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                يعقوب <span>AI</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">الرئيسية</a></li>
+                <li><a href="../dashboard.html">الأدوات</a></li>
+                <li><a href="../settings.html">الإعدادات</a></li>
+            </ul>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1><i class="fas fa-headphones"></i> تحويل النص إلى صوت</h1>
+        
+        <div class="tool-container" style="max-width: 800px; margin: 2rem auto;">
+            <div class="form-group">
+                <label>📝 النص المراد تحويله:</label>
+                <textarea id="textToSpeak" rows="6" placeholder="اكتب النص هنا... سيقوم الذكاء الاصطناعي بتحويله إلى كلام طبيعي"></textarea>
+                <small>الحد الأقصى 4096 حرف</small>
+            </div>
+            
+            <div class="form-group">
+                <label>🎵 نوع الصوت:</label>
+                <select id="voice">
+                    <option value="alloy">Alloy - طبيعي</option>
+                    <option value="echo">Echo - عميق</option>
+                    <option value="fable">Fable - بريطاني</option>
+                    <option value="onyx">Onyx - رجالي</option>
+                    <option value="nova">Nova - نسائي</option>
+                    <option value="shimmer">Shimmer - مشرق</option>
+                </select>
+            </div>
+            
+            <button class="btn btn-primary" onclick="convertToSpeech()">
+                <i class="fas fa-volume-up"></i> تحويل إلى صوت
+            </button>
+            
+            <div id="loading" style="display: none; text-align: center; margin-top: 2rem;">
+                <div class="spinner"></div>
+                <p>جاري تحويل النص إلى صوت...</p>
+            </div>
+            
+            <div id="result" class="result-box" style="display: none; text-align: center;">
+                <h3><i class="fas fa-music"></i> الصوت المُنتج:</h3>
+                <audio id="audioPlayer" controls style="width: 100%; margin-top: 1rem;"></audio>
+                <div style="margin-top: 1rem;">
+                    <button class="btn btn-secondary" onclick="downloadAudio()">
+                        <i class="fas fa-download"></i> تحميل الصوت
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAudioSrc = '';
+        
+        function getApiKey() {
+            const keys = JSON.parse(localStorage.getItem('apiKeys') || '{}');
+            return keys.openai || null;
+        }
+        
+        async function convertToSpeech() {
+            const text = document.getElementById('textToSpeak').value.trim();
+            const voice = document.getElementById('voice').value;
+            
+            if(!text) {
+                alert('⚠️ يرجى إدخال النص المراد تحويله');
+                return;
+            }
+            
+            if(text.length > 4096) {
+                alert('⚠️ النص طويل جداً. الحد الأقصى 4096 حرف');
+                return;
+            }
+            
+            const apiKey = getApiKey();
+            if(!apiKey) {
+                alert('⚠️ يرجى إدخال مفتاح API الخاص بـ OpenAI في صفحة الإعدادات أولاً');
+                window.location.href = '../settings.html';
+                return;
+            }
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/text-to-speech', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        apiKey: apiKey,
+                        voice: voice
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('loading').style.display = 'none';
+                
+                if(data.error) {
+                    alert('❌ ' + data.error);
+                } else {
+                    currentAudioSrc = data.audio;
+                    const audioPlayer = document.getElementById('audioPlayer');
+                    audioPlayer.src = currentAudioSrc;
+                    document.getElementById('result').style.display = 'block';
+                    audioPlayer.play();
+                    saveToHistory(text, voice);
+                }
+            } catch(error) {
+                document.getElementById('loading').style.display = 'none';
+                alert('❌ حدث خطأ في تحويل النص إلى صوت');
+            }
+        }
+        
+        function downloadAudio() {
+            if(currentAudioSrc) {
+                const link = document.createElement('a');
+                link.href = currentAudioSrc;
+                link.download = `yaqoub-tts-${Date.now()}.mp3`;
+                link.click();
+            }
+        }
+        
+        function saveToHistory(text, voice) {
+            let history = JSON.parse(localStorage.getItem('ttsHistory') || '[]');
+            history.unshift({
+                text: text.substring(0, 100),
+                voice: voice,
+                timestamp: new Date().toISOString()
+            });
+            if(history.length > 20) history = history.slice(0, 20);
+            localStorage.setItem('ttsHistory', JSON.stringify(history));
+        }
+    </script>
+    <script src="../js/theme.js"></script>
+</body>
+</html>
